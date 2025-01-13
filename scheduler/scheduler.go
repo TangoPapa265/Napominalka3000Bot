@@ -19,12 +19,8 @@ func StartScheduler(bot *tgbotapi.BotAPI) {
 func CheckReminders(bot *tgbotapi.BotAPI) {
 	currentTime := time.Now()
 	for _, reminder := range models.GetReminders() {
-		reminderTime, err := time.Parse("2006-01-02 15:04:05", reminder.Time)
-		if err != nil {
-			log.Printf("Ошибка парсинга времени '%s': %v\n", reminder.Time, err)
-			continue
-		}
-		if currentTime.After(reminderTime) {
+		// Проверяем, если текущее время прошло для этого напоминания
+		if currentTime.After(reminder.Time) {
 			msg := tgbotapi.NewMessage(int64(reminder.ID), "Напоминание: "+reminder.Message)
 			_, err := bot.Send(msg)
 			if err != nil {

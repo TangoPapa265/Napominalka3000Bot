@@ -2,27 +2,30 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
 type Reminder struct {
 	ID      int
 	Message string
-	Time    string
+	Time    time.Time
 }
 
 var Remindres []Reminder
 
-func AddReminder(message, time string) { // функция добавления напоминаний
+func AddReminder(message string, reminderTime time.Time) { // функция добавления напоминаний
 	id := len(Remindres) + 1
 	reminder := Reminder{
 		ID:      id,
 		Message: message,
-		Time:    time,
+		Time:    reminderTime,
 	}
 	Remindres = append(Remindres, reminder)
 	SaveRemindersToFile()
+	fmt.Printf("Напоминание '%s' на %s добавлено!\n", reminder.Message, reminder.Time)
 }
 
 func SaveRemindersToFile() { // функция сохранения напоминаний в JSON
@@ -41,7 +44,7 @@ func SaveRemindersToFile() { // функция сохранения напоми
 func LoadRemindersFromFile() { // функция загрузки напоминаний из файла JSON
 	data, err := os.ReadFile("reminders.json")
 	if err != nil {
-		log.Printf("Ошибка при чтении файлас напоминаниями", err)
+		log.Printf("Ошибка при чтении файла с напоминаниями", err)
 		return
 	}
 	err = json.Unmarshal(data, &Remindres)
@@ -67,10 +70,15 @@ func DeleteReminder(id int) bool { // функция удаления напом
 }
 
 func UpdateReminder(id int, newMessage string, newTime string) bool { // функция обновления напоминаний
+	parsedTime, err := time.Parse("2006-01-02 15:04", newTime)
+	if err != nil {
+		fmt.Println("Ошибка преобразовния времени: ", err)
+		return false
+	}
 	for i, reminder := range Remindres {
 		if reminder.ID == id {
 			Remindres[i].Message = newMessage
-			Remindres[i].Time = newTime
+			Remindres[i].Time = parsedTime
 			SaveRemindersToFile()
 			return true
 		}

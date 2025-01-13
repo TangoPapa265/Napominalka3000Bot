@@ -6,28 +6,35 @@ import (
 	"strconv"
 	"strings"
 	"testapp1/bot1/models"
+	"time"
 )
 
 func HandleAddCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 	args := message.CommandArguments()
 	if args == "" {
-		msg := tgbotapi.NewMessage(message.Chat.ID, "Пожалуйста, укажите напоминание в формате: /add <текст>, <время>")
+		msg := tgbotapi.NewMessage(message.Chat.ID, "Пожалуйста, укажите напоминание в формате: <текст>, <время>")
 		bot.Send(msg)
 		return
 	}
-	parts := strings.SplitN(args, " ", 2)
+	parts := strings.SplitN(args, " , ", 2)
 	if len(parts) < 2 {
-		msg := tgbotapi.NewMessage(message.Chat.ID, "Напоминание и время должны быть указаны: /add Напоминание 18:00")
+		msg := tgbotapi.NewMessage(message.Chat.ID, "Напоминание и время должны быть указаны: Напоминание 18:00")
 		bot.Send(msg)
 		return
 	}
 
-	messageText := parts[0]
-	time := parts[1]
+	messageText := strings.TrimSpace(parts[0])
+	timeStr := strings.TrimSpace(parts[0])[1]
 
-	models.AddReminder(messageText, time)
+	reminderTime, err := time.Parse("02-01-2006 15:04", strconv.Itoa(int(timeStr)))
+	if err != nil {
+		msg := tgbotapi.NewMessage(message.Chat.ID, fmt.Sprintf("Ошибка с форматом времени: %v", err))
+		bot.Send(msg)
+		return
+	}
+	models.AddReminder(messageText, reminderTime)
 
-	msg := tgbotapi.NewMessage(message.Chat.ID, fmt.Sprintf("Напоминание '%s' на %s добавлено!", messageText, time))
+	msg := tgbotapi.NewMessage(message.Chat.ID, fmt.Sprintf("Напоминание '%s' на %v добавлено!", messageText, reminderTime))
 	bot.Send(msg)
 }
 
